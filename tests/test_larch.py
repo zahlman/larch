@@ -29,10 +29,6 @@ class Graph:
     __repr__ = __str__
 
 
-def get_children(g):
-    return g.children
-
-
 D, E, F = Graph('D', 4), Graph('E', 5), Graph('F', 6)
 B, C = Graph('B', 2, D, E), Graph('C', 3, E, F)
 DAG = Graph('A', 1, B, C)
