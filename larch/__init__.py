@@ -51,11 +51,7 @@ class Traverser:
 
     def __call__(self, node):
         return self._combine(
-            node,
-            tuple(
-                self._recurse(child)
-                for child in self._get_children(node)
-            )
+            node, tuple(map(self._recurse, self._get_children(node)))
         )
 
 
