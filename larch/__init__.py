@@ -8,34 +8,18 @@ import functools, operator
 cache = lambda func: functools.lru_cache(maxsize=None)(func)
 
 
-def _combine_by_reduce(get_value, max_before, operation, node, sub_results):
+def _combine_reduce(get_value, max_before, operation, node, values):
     # We allow "max_before" in case the operation isn't commutative.
-    value = get_value(node)
-    if not sub_results:
-        return value
-    elif max_before is None:
-        accumulator = functools.reduce(operation, sub_results)
-        return operation(accumulator, value)
-    elif max_before == 0:
-        return functools.reduce(operation, sub_results, value)
-    else:
-        # max_before>0 and len(sub_results)>0, therefore begin is non-empty.
-        before, after = sub_results[:max_before], sub_results[max_before:]
-        accumulator = functools.reduce(operation, before)
-        accumulator = operation(accumulator, value)
-        return functools.reduce(operation, after, accumulator)
+    if max_before is None: # avoid duplicating with slices.
+        max_before = len(child_values)
+    # insert node value in the appropriate place.
+    values = values[:max_before] + (get_value(node),) + values[max_before:]
+    # There is at least one value, so we don't need an initial value.
+    return functools.reduce(operation, values)
 
 
 def combine_sum_preorder(get_value):
-    return functools.partial(
-        _combine_by_reduce,
-        get_value, 0, operator.add
-    )
-
-
-def _combine_children_by_sum(sub_results):
-    return sum(sub_results)
-
+    return functools.partial(_combine_reduce, get_value, 0, operator.add)
 
 
 # We have to use a class for this, since with functools.partial
