@@ -2,44 +2,9 @@ __version__ = '0.1.0'
 
 
 import functools, operator
+from .cache import cache, unique_cache
+from .combine import get_combiner
 
-
-# Same behaviour from `functools.cache` in 3.9+
-cache = lambda func: functools.lru_cache(maxsize=None)(func)
-
-
-def _combine_reduce(get_value, max_before, operation, node, values):
-    # We allow "max_before" in case the operation isn't commutative.
-    if max_before is None: # avoid duplicating with slices.
-        max_before = len(child_values)
-    # insert node value in the appropriate place.
-    values = values[:max_before] + (get_value(node),) + values[max_before:]
-    # There is at least one value, so we don't need an initial value.
-    return functools.reduce(operation, values)
-
-
-def combine_sum_preorder(get_value):
-    return functools.partial(_combine_reduce, get_value, 0, operator.add)
-
-
-def combine_sum_inorder(get_value):
-    return functools.partial(_combine_reduce, get_value, 1, operator.add)
-
-
-def combine_sum_postorder(get_value):
-    return functools.partial(_combine_reduce, get_value, None, operator.add)
-
-
-_combiners = {
-    'sum_preorder': combine_sum_preorder,
-    'sum_inorder': combine_sum_inorder,
-    'sum_postorder': combine_sum_postorder
-}
-
-
-# We have to use a class for this, since with functools.partial
-# we would need the partial args to be self-referential
-# (one arg would be the partial itself).
 
 # The recursion algorithm is pulled out as a separate function so that
 # each Traverser instance can decorate it with its own cache and the
@@ -52,6 +17,9 @@ def _recurse(traverser, node):
     )
 
 
+# We have to use a class for this, since with functools.partial
+# we would need the partial args to be self-referential
+# (one arg would be the partial itself).
 class Traverser:
     def __init__(self, get_children, combine, cache):
         self._get_children = get_children
@@ -105,24 +73,10 @@ def make_traverser(
             ('get_value', 'value_attr', 'value_item'),
             'must be specified and not None when `combine` is a string'
         )
-        combine = _combiners[combine](get_value)
+        combine = get_combiner(combine, get_value)
     elif not callable(combine):
         raise TypeError(''.join(
             '`combine` must be a lookup string or a callable accepting',
             'a node and a tuple of child results'
         ))
     return Traverser(get_children, combine, cache)
-
-
-def unique_cache(dummy=0):
-    def decorator(traverse_func):
-        seen = set()
-        @functools.wraps(traverse_func)
-        def cached(node):
-            if node in seen:
-                return dummy
-            seen.add(node)
-            return traverse_func(node)    
-        cached.cache_clear = seen.clear
-        return cached
-    return decorator
