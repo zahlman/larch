@@ -34,12 +34,8 @@ def get_children(g):
     return g.children
 
 
-def get_value(g):
-    return g.value
-
-
 def add_values(current, from_children):
-    return current + sum(from_children)
+    return current.value + sum(from_children)
 
 
 D, E, F = Graph('D', 4), Graph('E', 5), Graph('F', 6)
@@ -56,24 +52,12 @@ def test_version():
 
 
 def test_dag():
-    assert Traverser(
-        get_children, get_value, add_values, None
-    )(DAG) == 26
-    assert Traverser(
-        get_children, get_value, add_values, cache
-    )(DAG) == 26
-    assert Traverser(
-        get_children, get_value, add_values, unique_cache()
-    )(DAG) == 21
+    assert Traverser(get_children, add_values, None)(DAG) == 26
+    assert Traverser(get_children, add_values, cache)(DAG) == 26
+    assert Traverser(get_children, add_values, unique_cache())(DAG) == 21
 
 
 def test_tree():
-    assert Traverser(
-        get_children, get_value, add_values, None
-    )(Tree) == 26
-    assert Traverser(
-        get_children, get_value, add_values, cache
-    )(Tree) == 26
-    assert Traverser(
-        get_children, get_value, add_values, unique_cache()
-    )(Tree) == 26
+    assert Traverser(get_children, add_values, None)(Tree) == 26
+    assert Traverser(get_children, add_values, cache)(Tree) == 26
+    assert Traverser(get_children, add_values, unique_cache())(Tree) == 26

@@ -12,9 +12,8 @@ cache = lambda func: functools.lru_cache(maxsize=None)(func)
 # we would need the partial args to be self-referential
 # (one arg would be the partial itself).
 class Traverser:
-    def __init__(self, get_children, get_value, combine, cache=cache):
+    def __init__(self, get_children, combine, cache=cache):
         self._get_children = get_children
-        self._get_value = get_value
         self._combine = combine
         if cache is None:
             self._recurse = self.__call__
@@ -30,7 +29,7 @@ class Traverser:
 
     def __call__(self, node):
         return self._combine(
-            self._get_value(node),
+            node,
             tuple(
                 self._recurse(child)
                 for child in self._get_children(node)
