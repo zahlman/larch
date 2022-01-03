@@ -1,11 +1,41 @@
 __version__ = '0.1.0'
 
 
-import functools
+import functools, operator
 
 
 # Same behaviour from `functools.cache` in 3.9+
 cache = lambda func: functools.lru_cache(maxsize=None)(func)
+
+
+def _combine_by_reduce(get_value, max_before, operation, node, sub_results):
+    # We allow "max_before" in case the operation isn't commutative.
+    value = get_value(node)
+    if not sub_results:
+        return value
+    elif max_before is None:
+        accumulator = functools.reduce(operation, sub_results)
+        return operation(accumulator, value)
+    elif max_before == 0:
+        return functools.reduce(operation, sub_results, value)
+    else:
+        # max_before>0 and len(sub_results)>0, therefore begin is non-empty.
+        before, after = sub_results[:max_before], sub_results[max_before:]
+        accumulator = functools.reduce(operation, before)
+        accumulator = operation(accumulator, value)
+        return functools.reduce(operation, after, accumulator)
+
+
+def combine_sum_preorder(get_value):
+    return functools.partial(
+        _combine_by_reduce,
+        get_value, 0, operator.add
+    )
+
+
+def _combine_children_by_sum(sub_results):
+    return sum(sub_results)
+
 
 
 # We have to use a class for this, since with functools.partial
