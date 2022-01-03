@@ -40,15 +40,27 @@ _combiners = {
 # We have to use a class for this, since with functools.partial
 # we would need the partial args to be self-referential
 # (one arg would be the partial itself).
+
+# The recursion algorithm is pulled out as a separate function so that
+# each Traverser instance can decorate it with its own cache and the
+# recursive calls can use the decorated version.
+# Doing it this way instead of using `__call__` allows the cache to give
+# results immediately on future requests rather than doing one recursion step.
+def _recurse(traverser, node):
+    return traverser._combine(
+        node, tuple(map(traverser._recurse, traverser._get_children(node)))
+    )
+
+
 class Traverser:
     def __init__(self, get_children, combine, cache):
         self._get_children = get_children
         self._combine = combine
         if cache is None:
-            self._recurse = self.__call__
+            self._recurse = functools.partial(_recurse, self)
             self._clear = lambda: None
         else:
-            self._recurse = cache(self.__call__)
+            self._recurse = cache(functools.partial(_recurse, self))
             self._clear = self._recurse.cache_clear
 
 
@@ -57,9 +69,7 @@ class Traverser:
 
 
     def __call__(self, node):
-        return self._combine(
-            node, tuple(map(self._recurse, self._get_children(node)))
-        )
+        return self._recurse(node)
 
 
 def _getter(func, attr, item, names, tag):
