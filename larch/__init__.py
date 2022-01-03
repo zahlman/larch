@@ -22,6 +22,14 @@ def combine_sum_preorder(get_value):
     return functools.partial(_combine_reduce, get_value, 0, operator.add)
 
 
+def combine_sum_inorder(get_value):
+    return functools.partial(_combine_reduce, get_value, 1, operator.add)
+
+
+def combine_sum_postorder(get_value):
+    return functools.partial(_combine_reduce, get_value, None, operator.add)
+
+
 # We have to use a class for this, since with functools.partial
 # we would need the partial args to be self-referential
 # (one arg would be the partial itself).
