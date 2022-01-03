@@ -2,21 +2,13 @@ from larch import __version__, make_traverser, cache, unique_cache
 
 
 # Data structures etc. for testing purposes
-class Graph:
-    def __init__(self, name, value, *children):
-        self._name = name
-        self._value = value
+class GraphNode:
+    def __init__(self, value, *children):
+        # `value` is a plain attribute. We thus test access for both
+        # ordinary attributes and properties (not that there's any *reason*
+        # to expect one to fail where the other succeeds...)
+        self.value = value
         self._children = list(children)
-
-
-    @property
-    def value(self):
-        return self._value
-
-
-    @value.setter
-    def value(self, v):
-        self._value = v
 
 
     @property
@@ -25,25 +17,20 @@ class Graph:
         # Clients may modify the list, but not replace it.
 
 
-    def __str__(self):
-        return self._name
-
-
-    __repr__ = __str__
-
-
 def make_dag():
-    D, E, F = Graph('D', 4), Graph('E', 5), Graph('F', 6)
-    B, C = Graph('B', 2, D, E), Graph('C', 3, E, F)
-    return Graph('A', 1, B, C)
+    # A simple directed, acyclic graph with one join.
+    # Numeric node values so that we can test e.g. summing the values.
+    D, E, F = GraphNode(4), GraphNode(5), GraphNode(6)
+    B, C = GraphNode(2, D, E), GraphNode(3, E, F)
+    return GraphNode(1, B, C)
 
 
 def make_tree():
     # A simple, full binary tree with nodes A to G inclusive.
     # Inorder traversal gives letters in order.
-    A, C, E, G = Graph('A', 'A'), Graph('C', 'C'), Graph('E', 'E'), Graph('G', 'G')
-    B, F = Graph('B', 'B', A, C), Graph('F', 'F', E, G)
-    return Graph('D', 'D', B, F)
+    A, C, E, G = GraphNode('A'), GraphNode('C'), GraphNode('E'), GraphNode('G')
+    B, F = GraphNode('B', A, C), GraphNode('F', E, G)
+    return GraphNode('D', B, F)
 
 
 # Tests.
@@ -69,14 +56,14 @@ def test_dag():
 def test_tree():
     Tree = make_tree()
     assert make_traverser(
-        'sum_preorder', child_attr='children', get_value=str,
+        'sum_preorder', child_attr='children', value_attr='value',
         cache=None
     )(Tree) == 'DBACFEG'
     assert make_traverser(
-        'sum_preorder', child_attr='children', get_value=str
+        'sum_preorder', child_attr='children', value_attr='value'
     )(Tree) == 'DBACFEG'
     # Since we're looking at a tree with no joins, the cache doesn't matter.
     assert make_traverser(
-        'sum_preorder', child_attr='children', get_value=str,
+        'sum_preorder', child_attr='children', value_attr='value',
         cache=unique_cache('')
     )(Tree) == 'DBACFEG'
