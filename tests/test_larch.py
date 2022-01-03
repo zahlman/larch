@@ -1,4 +1,4 @@
-from larch import __version__, Traverser, cache, unique_cache, combine_sum_preorder
+from larch import __version__, make_traverser, cache, unique_cache
 
 
 # Data structures etc. for testing purposes
@@ -47,15 +47,29 @@ def test_version():
 
 
 def test_dag():
-    add_values = combine_sum_preorder(lambda g: g.value)
-    assert Traverser(get_children, add_values, None)(DAG) == 26
-    assert Traverser(get_children, add_values, cache)(DAG) == 26
-    assert Traverser(get_children, add_values, unique_cache())(DAG) == 21
+    assert make_traverser(
+        'sum_preorder', child_attr='children', value_attr='value',
+        cache=None
+    )(DAG) == 26
+    assert make_traverser(
+        'sum_preorder', child_attr='children', value_attr='value'
+    )(DAG) == 26
+    assert make_traverser(
+        'sum_preorder', child_attr='children', value_attr='value',
+        cache=unique_cache()
+    )(DAG) == 21
 
 
 def test_tree():
-    add_values = combine_sum_preorder(str)
-    assert Traverser(get_children, add_values, None)(Tree) == 'ABDECEF' 
-    assert Traverser(get_children, add_values, cache)(Tree) == 'ABDECEF'
+    assert make_traverser(
+        'sum_preorder', child_attr='children', get_value=str,
+        cache=None
+    )(Tree) == 'ABDECEF'
+    assert make_traverser(
+        'sum_preorder', child_attr='children', get_value=str
+    )(Tree) == 'ABDECEF'
     # Since we're looking at a tree with no joins, the cache doesn't matter.
-    assert Traverser(get_children, add_values, unique_cache(''))(Tree) == 'ABDECEF'
+    assert make_traverser(
+        'sum_preorder', child_attr='children', get_value=str,
+        cache=unique_cache('')
+    )(Tree) == 'ABDECEF'
