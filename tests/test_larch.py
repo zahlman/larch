@@ -41,14 +41,14 @@ def test_version():
 def test_dag():
     DAG = make_dag()
     assert make_traverser(
-        'sum_preorder', child_attr='children', value_attr='value',
+        'sum', order='pre', child_attr='children', value_attr='value',
         cache=None
     )(DAG) == 26
     assert make_traverser(
-        'sum_preorder', child_attr='children', value_attr='value'
+        'sum', order='pre', child_attr='children', value_attr='value'
     )(DAG) == 26
     assert make_traverser(
-        'sum_preorder', child_attr='children', value_attr='value',
+        'sum', order='pre', child_attr='children', value_attr='value',
         cache=unique_cache()
     )(DAG) == 21
 
@@ -56,14 +56,14 @@ def test_dag():
 def test_tree():
     Tree = make_tree()
     assert make_traverser(
-        'sum_preorder', child_attr='children', value_attr='value',
+        'sum', order='pre', child_attr='children', value_attr='value',
         cache=None
     )(Tree) == 'DBACFEG'
     assert make_traverser(
-        'sum_preorder', child_attr='children', value_attr='value'
+        'sum', order='pre', child_attr='children', value_attr='value'
     )(Tree) == 'DBACFEG'
     # Since we're looking at a tree with no joins, the cache doesn't matter.
     assert make_traverser(
-        'sum_preorder', child_attr='children', value_attr='value',
+        'sum', order='pre', child_attr='children', value_attr='value',
         cache=unique_cache('')
     )(Tree) == 'DBACFEG'
