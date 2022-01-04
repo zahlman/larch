@@ -13,7 +13,8 @@ from .combine import get_combiner
 # results immediately on future requests rather than doing one recursion step.
 def _recurse(traverser, node):
     return traverser._combine(
-        node, tuple(map(traverser._recurse, traverser._get_children(node)))
+        traverser._get_value(node),
+        tuple(map(traverser._recurse, traverser._get_children(node)))
     )
 
 
@@ -21,8 +22,9 @@ def _recurse(traverser, node):
 # we would need the partial args to be self-referential
 # (one arg would be the partial itself).
 class Traverser:
-    def __init__(self, get_children, combine, cache):
+    def __init__(self, get_children, get_value, combine, cache):
         self._get_children = get_children
+        self._get_value = get_value
         self._combine = combine
         if cache is None:
             self._recurse = functools.partial(_recurse, self)
@@ -67,16 +69,17 @@ def make_traverser(
         ('get_children', 'child_attr', 'child_item'),
         'must be specified and not None'
     )
+    # TODO: allow this to be None.
+    get_value = _getter(
+        get_value, value_attr, value_item,
+        ('get_value', 'value_attr', 'value_item'),
+        'must be specified and not None'
+    )
     if isinstance(combine, str):
-        get_value = _getter(
-            get_value, value_attr, value_item,
-            ('get_value', 'value_attr', 'value_item'),
-            'must be specified and not None when `combine` is a string'
-        )
-        combine = get_combiner(combine, get_value)
+        combine = get_combiner(combine)
     elif not callable(combine):
         raise TypeError(''.join(
             '`combine` must be a lookup string or a callable accepting',
             'a node and a tuple of child results'
         ))
-    return Traverser(get_children, combine, cache)
+    return Traverser(get_children, get_value, combine, cache)
