@@ -56,14 +56,14 @@ def test_dag():
 def test_tree():
     Tree = make_tree()
     assert make_traverser(
-        'sum', order='pre', child_attr='children', value_attr='value',
+        'concat', order='pre', child_attr='children', value_attr='value',
         cache=None
     )(Tree) == 'DBACFEG'
     assert make_traverser(
-        'sum', order='pre', child_attr='children', value_attr='value'
+        'concat', order='pre', child_attr='children', value_attr='value'
     )(Tree) == 'DBACFEG'
     # Since we're looking at a tree with no joins, the cache doesn't matter.
     assert make_traverser(
-        'sum', order='pre', child_attr='children', value_attr='value',
+        'concat', order='pre', child_attr='children', value_attr='value',
         cache=unique_cache('')
     )(Tree) == 'DBACFEG'
