@@ -1,5 +1,5 @@
 import pytest
-from larch import __version__, make_traverser, cache, unique_cache
+from larch import __version__, make_traverser, cache as default_cache, unique_cache
 from larch.traversal import TraversalOrder
 
 
@@ -40,68 +40,50 @@ def test_version():
     assert __version__ == '0.1.0'
 
 
-def test_dag_caches():
+@pytest.mark.parametrize("cache,result", [
+    (None, 26), (default_cache, 26), (unique_cache(), 21)
+])
+def test_dag_caches(cache, result):
     DAG = _numeric_dag()
     assert make_traverser(
         'sum', order='pre', child_attr='children', value_attr='value',
-        cache=None
-    )(DAG) == 26
-    assert make_traverser(
-        'sum', order='pre', child_attr='children', value_attr='value'
-    )(DAG) == 26
-    assert make_traverser(
-        'sum', order='pre', child_attr='children', value_attr='value',
-        cache=unique_cache()
-    )(DAG) == 21
+        cache=cache
+    )(DAG) == result 
 
 
-def test_tree_caches():
+@pytest.mark.parametrize("cache", [None, default_cache, unique_cache('')])
+def test_tree_caches(cache):
     Tree = _alpha_tree()
+    # Since we're looking at a tree with no joins, the result doesn't vary. 
     assert make_traverser(
         'concat', order='pre', child_attr='children', value_attr='value',
-        cache=None
-    )(Tree) == 'DBACFEG'
-    assert make_traverser(
-        'concat', order='pre', child_attr='children', value_attr='value'
-    )(Tree) == 'DBACFEG'
-    # Since we're looking at a tree with no joins, the cache doesn't matter.
-    assert make_traverser(
-        'concat', order='pre', child_attr='children', value_attr='value',
-        cache=unique_cache('')
+        cache=cache
     )(Tree) == 'DBACFEG'
 
 
-def test_tree_orders():
-    Tree = _alpha_tree()
-    assert make_traverser(
-        'concat', order='post', child_attr='children', value_attr='value'
-    )(Tree) == 'ACBEGFD'
-    assert make_traverser(
-        'concat', order='in', child_attr='children', value_attr='value'
-    )(Tree) == 'ABCDEFG'
-    # leaves only.
-    assert make_traverser(
-        'concat', child_attr='children', value_attr='value'
-    )(Tree) == 'ACEG'
+@pytest.mark.parametrize("order,result", [
+    # Specify via the enum type.
+    (TraversalOrder.PRE, 'DBACFEG'),
+    # Specify via strings.
+    ('in', 'ABCDEFG'),
+    # String names for orders are case insensitive.
+    ('pOsT', 'ACBEGFD'),
     # Specify 2 values on the left - equivalent to postorder here.
+    (2, 'ACBEGFD'),
+    # Leaves only.
+    (None, 'ACEG')
+])
+def test_good_tree_orders(order, result):
+    Tree = _alpha_tree()
     assert make_traverser(
-        'concat', order=2, child_attr='children', value_attr='value'
-    )(Tree) == 'ACBEGFD'
-    # Specify via the enumeration.
-    assert make_traverser(
-        'concat', order=TraversalOrder.PRE,
-        child_attr='children', value_attr='value'
-    )(Tree) == 'DBACFEG'
+        'concat', order=order, child_attr='children', value_attr='value'
+    )(Tree) == result
+    
+    
+@pytest.mark.parametrize("order", [0.5, 'bad', ()])
+def test_bad_tree_orders(order):
     # Invalid orderings.
     with pytest.raises(ValueError):
         make_traverser(
-            'concat', order=0.5, child_attr='children', value_attr='value'
-        )
-    with pytest.raises(ValueError):
-        make_traverser(
-            'concat', order='bad', child_attr='children', value_attr='value'
-        )
-    with pytest.raises(ValueError):
-        make_traverser(
-            'concat', order=(), child_attr='children', value_attr='value'
+            'concat', order=order, child_attr='children', value_attr='value'
         )
