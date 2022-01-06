@@ -1,4 +1,6 @@
+import pytest
 from larch import __version__, make_traverser, cache, unique_cache
+from larch.traversal import TraversalOrder
 
 
 # Data structures etc. for testing purposes
@@ -77,3 +79,29 @@ def test_tree_orders():
     assert make_traverser(
         'concat', order='in', child_attr='children', value_attr='value'
     )(Tree) == 'ABCDEFG'
+    # leaves only.
+    assert make_traverser(
+        'concat', child_attr='children', value_attr='value'
+    )(Tree) == 'ACEG'
+    # Specify 2 values on the left - equivalent to postorder here.
+    assert make_traverser(
+        'concat', order=2, child_attr='children', value_attr='value'
+    )(Tree) == 'ACBEGFD'
+    # Specify via the enumeration.
+    assert make_traverser(
+        'concat', order=TraversalOrder.PRE,
+        child_attr='children', value_attr='value'
+    )(Tree) == 'DBACFEG'
+    # Invalid orderings.
+    with pytest.raises(ValueError):
+        make_traverser(
+            'concat', order=0.5, child_attr='children', value_attr='value'
+        )
+    with pytest.raises(ValueError):
+        make_traverser(
+            'concat', order='bad', child_attr='children', value_attr='value'
+        )
+    with pytest.raises(ValueError):
+        make_traverser(
+            'concat', order=(), child_attr='children', value_attr='value'
+        )

@@ -1,3 +1,4 @@
+from enum import IntEnum
 import functools
 
 
@@ -12,27 +13,36 @@ def _visitor(get_children, get_value, left_count, recurse, node):
         yield get_value(node)
 
 
-def _children_only(get_children, recurse, node):
+def _children_only(get_children, get_value, recurse, node):
+    is_leaf = True
     for child in get_children(node):
+        is_leaf = False
         yield recurse(child)
+    if is_leaf:
+        yield get_value(node)
+
+
+class TraversalOrder(IntEnum):
+    # Specifies the order of traversal, in terms of the maximum number of
+    # children to visit before the current node.
+    IN = 1
+    PRE = 0
+    POST = -1 # i.e. infinite, since it will never be equal.
 
 
 def get_visitor(get_value, get_children, order):
-    if get_value is None:
-        # no value is generated for the current node when traversing.
-        if order is not None:
-            raise ValueError(
-                "cannot specify order when nodes don't produce a value"
-            )
-        return functools.partial(_children_only, get_children)
-    else:
+    # Make sure of this in a previous step.
+    assert get_value is not None
+    if order is None:
+        return functools.partial(_children_only, get_children, get_value)
+    if isinstance(order, str):
         try:
-            left_count = {
-                'in': 1, 'pre': 0, 'post': None
-            }[order]
+            order = TraversalOrder[order.upper()]
         except KeyError:
-            raise ValueError(
-                '`order` must be specified as `in`, `pre` or `post` ' +
-                'when nodes produce a value'
-            )
-        return functools.partial(_visitor, get_children, get_value, left_count)
+            pass # still a string, failing the next check
+    if not isinstance(order, int):
+        raise ValueError(
+            "`order` must be `None`, an integer, or an order name string " +
+            "(`'in'`, `'pre'` or `'post'`, not case sensitive)"
+        )
+    return functools.partial(_visitor, get_children, get_value, order)
