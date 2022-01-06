@@ -67,3 +67,13 @@ def test_tree_caches():
         'concat', order='pre', child_attr='children', value_attr='value',
         cache=unique_cache('')
     )(Tree) == 'DBACFEG'
+
+
+def test_tree_orders():
+    Tree = _alpha_tree()
+    assert make_traverser(
+        'concat', order='post', child_attr='children', value_attr='value'
+    )(Tree) == 'ACBEGFD'
+    assert make_traverser(
+        'concat', order='in', child_attr='children', value_attr='value'
+    )(Tree) == 'ABCDEFG'
