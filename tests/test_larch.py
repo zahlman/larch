@@ -17,7 +17,7 @@ class GraphNode:
         # Clients may modify the list, but not replace it.
 
 
-def make_dag():
+def _numeric_dag():
     # A simple directed, acyclic graph with one join.
     # Numeric node values so that we can test e.g. summing the values.
     D, E, F = GraphNode(4), GraphNode(5), GraphNode(6)
@@ -25,7 +25,7 @@ def make_dag():
     return GraphNode(1, B, C)
 
 
-def make_tree():
+def _alpha_tree():
     # A simple, full binary tree with nodes A to G inclusive.
     # Inorder traversal gives letters in order.
     A, C, E, G = GraphNode('A'), GraphNode('C'), GraphNode('E'), GraphNode('G')
@@ -38,8 +38,8 @@ def test_version():
     assert __version__ == '0.1.0'
 
 
-def test_dag():
-    DAG = make_dag()
+def test_dag_caches():
+    DAG = _numeric_dag()
     assert make_traverser(
         'sum', order='pre', child_attr='children', value_attr='value',
         cache=None
@@ -53,8 +53,8 @@ def test_dag():
     )(DAG) == 21
 
 
-def test_tree():
-    Tree = make_tree()
+def test_tree_caches():
+    Tree = _alpha_tree()
     assert make_traverser(
         'concat', order='pre', child_attr='children', value_attr='value',
         cache=None
