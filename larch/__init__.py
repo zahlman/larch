@@ -13,7 +13,7 @@ from .traversal import get_visitor
 # Doing it this way instead of using `__call__` allows the cache to give
 # results immediately on future requests rather than doing one recursion step.
 def _recurse(traverser, node):
-    return traverser._combine(traverser._visit(traverser._recurse, node))
+    return traverser._combine(traverser.visit(node))
 
 
 # We have to use a class for this, since with functools.partial
@@ -29,6 +29,10 @@ class Traverser:
         else:
             self._recurse = cache(functools.partial(_recurse, self))
             self._clear = self._recurse.cache_clear
+
+
+    def visit(self, node):
+        return self._visit(self._recurse, node)
 
 
     def clear_cache(self):
