@@ -1,19 +1,10 @@
-__version__ = '0.1.0'
+__version__ = "0.1.0+25"
 
 
 import functools, operator
 from .cache import cache, unique_cache
 from .combine import get_combiner
 from .traversal import get_visitor
-
-
-# The recursion algorithm is pulled out as a separate function so that
-# each Traverser instance can decorate it with its own cache and the
-# recursive calls can use the decorated version.
-# Doing it this way instead of using `__call__` allows the cache to give
-# results immediately on future requests rather than doing one recursion step.
-def _recurse(traverser, node):
-    return traverser._combine(traverser.visit(node))
 
 
 # We have to use a class for this, since with functools.partial
@@ -24,15 +15,15 @@ class Traverser:
         self._visit = visit
         self._combine = combine
         if cache is None:
-            self._recurse = functools.partial(_recurse, self)
+            self._recurse = self.result_from
             self._clear = lambda: None
         else:
-            self._recurse = cache(functools.partial(_recurse, self))
+            self._recurse = cache(self.result_from)
             self._clear = self._recurse.cache_clear
 
 
-    def visit(self, node):
-        return self._visit(self._recurse, node)
+    def result_from(self, node):
+        return self._combine(self._visit(self._recurse, node))
 
 
     def clear_cache(self):

@@ -37,7 +37,7 @@ def _alpha_tree():
 
 # Tests.
 def test_version():
-    assert __version__ == '0.1.0'
+    assert __version__ == '0.1.0+25'
 
 
 @pytest.mark.parametrize("cache,result", [
