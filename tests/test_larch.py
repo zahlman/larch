@@ -35,6 +35,36 @@ def _alpha_tree():
     return GraphNode('D', B, F)
 
 
+def _numeric_tree():
+    # A simple, full binary tree with integer values 0 to 6 inclusive.
+    # Inorder traversal gives values in order.
+    A, C, E, G = GraphNode(0), GraphNode(2), GraphNode(4), GraphNode(6)
+    B, F = GraphNode(1, A, C), GraphNode(5, E, G)
+    return GraphNode(3, B, F)
+
+
+class _matrix11:
+    # Trivial matrix type for testing __matmul__.
+    def __init__(self, data):
+        self._data = data
+
+
+    def __matmul__(self, other):
+        return _matrix11(self._data * other._data)
+        
+
+def _mat_tree():
+    # Like the numeric tree, just to test the `@` combiner is accessible.
+    # Also shows multiplication without zero values.
+    A, B, C, D, E, F, G = [
+        GraphNode(_matrix11(i)) for i in range(1, 8)
+    ]
+    B.children.extend([A, C])
+    F.children.extend([E, G])
+    D.children.extend([B, F])
+    return D
+
+
 # Tests.
 def test_version():
     assert __version__ == '0.1.0+25'
@@ -87,3 +117,32 @@ def test_bad_tree_orders(order):
         make_traverser(
             'concat', order=order, child_attr='children', value_attr='value'
         )
+
+
+@pytest.mark.parametrize("operation,result", [
+    ('+', 21), ('*', 0), ('&', 0), ('|', 7), ('^', 7),
+    ('all', False), ('any', True), ('min', 0), ('max', 6)
+])
+def test_numeric_ops(operation, result):
+    Tree = _numeric_tree()
+    assert make_traverser(
+        operation, order='in', child_attr='children', value_attr='value'
+    )(Tree) == result
+
+
+def test_matmul():
+    Tree = _mat_tree()
+    assert make_traverser(
+        '@', order='in', child_attr='children', value_attr='value'
+    )(Tree)._data == 5040
+
+
+@pytest.mark.parametrize("operation,result", [
+    ('[[]]', [[['A'], 'B', ['C']], 'D', [['E'], 'F', ['G']]]),
+    ('(())', ((('A',), 'B', ('C',)), 'D', (('E',), 'F', ('G',))))
+])
+def test_nesting(operation, result):
+    Tree = _alpha_tree()
+    assert make_traverser(
+        operation, order='in', child_attr='children', value_attr='value'
+    )(Tree) == result
