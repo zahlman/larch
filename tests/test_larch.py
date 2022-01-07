@@ -27,20 +27,24 @@ def _numeric_dag():
     return GraphNode(1, B, C)
 
 
+def _build_tree(values):
+    A, B, C, D, E, F, G = map(GraphNode, values)
+    B.children.extend([A, C])
+    F.children.extend([E, G])
+    D.children.extend([B, F])
+    return D
+
+
 def _alpha_tree():
     # A simple, full binary tree with nodes A to G inclusive.
     # Inorder traversal gives letters in order.
-    A, C, E, G = GraphNode('A'), GraphNode('C'), GraphNode('E'), GraphNode('G')
-    B, F = GraphNode('B', A, C), GraphNode('F', E, G)
-    return GraphNode('D', B, F)
+    return _build_tree('ABCDEFG')
 
 
 def _numeric_tree():
     # A simple, full binary tree with integer values 0 to 6 inclusive.
     # Inorder traversal gives values in order.
-    A, C, E, G = GraphNode(0), GraphNode(2), GraphNode(4), GraphNode(6)
-    B, F = GraphNode(1, A, C), GraphNode(5, E, G)
-    return GraphNode(3, B, F)
+    return _build_tree(range(7))
 
 
 class _matrix11:
@@ -56,13 +60,7 @@ class _matrix11:
 def _mat_tree():
     # Like the numeric tree, just to test the `@` combiner is accessible.
     # Also shows multiplication without zero values.
-    A, B, C, D, E, F, G = [
-        GraphNode(_matrix11(i)) for i in range(1, 8)
-    ]
-    B.children.extend([A, C])
-    F.children.extend([E, G])
-    D.children.extend([B, F])
-    return D
+    return _build_tree(map(_matrix11, range(1, 8)))
 
 
 # Tests.
