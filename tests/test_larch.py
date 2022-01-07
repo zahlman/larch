@@ -63,6 +63,11 @@ def _mat_tree():
     return _build_tree(map(_matrix11, range(1, 8)))
 
 
+def _set_tree():
+    elements = 'ABCDEF'
+    return _build_tree(set(elements[:i]) for i in range(7))
+
+
 # Tests.
 def test_version():
     assert __version__ == '0.1.0+25'
@@ -141,6 +146,19 @@ def test_matmul():
 ])
 def test_nesting(operation, result):
     Tree = _alpha_tree()
+    assert make_traverser(
+        operation, order='in', child_attr='children', value_attr='value'
+    )(Tree) == result
+
+
+@pytest.mark.parametrize("operation,result", [
+    ('intersection', set()), ('union', {'A', 'B', 'C', 'D', 'E', 'F'}),
+    ('symmetric-difference', {'B', 'D', 'F'}),
+    ('all', False), ('any', True),
+    ('min', set()), ('max', {'A', 'B', 'C', 'D', 'E', 'F'})
+])
+def test_set_ops(operation, result):
+    Tree = _set_tree()
     assert make_traverser(
         operation, order='in', child_attr='children', value_attr='value'
     )(Tree) == result
