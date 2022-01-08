@@ -47,6 +47,14 @@ def _numeric_tree():
     return _build_tree(range(7))
 
 
+def _chain():
+    # test deep linear recursion.
+    node = GraphNode(1)
+    for i in range(2000):
+        node = GraphNode(1, node)
+    return node
+
+
 class _matrix11:
     # Trivial matrix type for testing __matmul__.
     def __init__(self, data):
@@ -162,3 +170,11 @@ def test_set_ops(operation, result):
     assert make_traverser(
         operation, order='in', child_attr='children', value_attr='value'
     )(Tree) == result
+
+
+# Need completely new architecture for this.
+@pytest.mark.xfail
+def test_stack():
+    assert make_traverser(
+        '+', order='in', child_attr='children', value_attr='value'
+    )(_chain()) == 2000
