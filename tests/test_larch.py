@@ -178,3 +178,25 @@ def test_stack():
     assert make_traverser(
         '+', order='in', child_attr='children', value_attr='value'
     )(_chain()) == 2000
+
+
+# Examples of "virtual nodes" used for recursive algorithms.
+def test_fib():
+    assert make_traverser(
+        '+', 
+        get_children = lambda n: range(n)[-2:],
+        get_value = lambda n: 1
+    )(10) == 89
+
+
+def test_pascal():
+    def smaller(x, y):
+        if x > 0:
+            yield (x-1, y)
+        if y > 0:
+            yield (x, y-1)
+    assert make_traverser(
+        '+',
+        get_children = lambda xy: smaller(*xy),
+        get_value = lambda xy: 1
+    )((5, 5)) == 252
