@@ -47,12 +47,14 @@ def _numeric_tree():
     return _build_tree(range(7))
 
 
-def _chain():
+def _chain(n):
     # test deep linear recursion.
-    node = GraphNode(1)
-    for i in range(2000):
-        node = GraphNode(1, node)
-    return node
+    start = GraphNode(1)
+    current = start
+    for i in range(2, n+1):
+        current.children.append(GraphNode(i))
+        current = current.children[-1]
+    return start, current 
 
 
 class _matrix11:
@@ -175,9 +177,22 @@ def test_set_ops(operation, result):
 # Need completely new architecture for this.
 @pytest.mark.xfail
 def test_stack():
+    start, end = _chain(2000)
     assert make_traverser(
-        '+', order='in', child_attr='children', value_attr='value'
-    )(_chain()) == 2000
+        '+', order='post', child_attr='children', value_attr='value'
+    )(start) == 2000
+
+
+# Make this easier to use and avoid the sentinel.
+def test_cycle():
+    start, end = _chain(10)
+    end.children.append(start)
+    start = start.children[0].children[0].children[0]
+    assert make_traverser(
+        '[]', order='pre', child_attr='children',
+        get_value = lambda node: [node.value],
+        cache=unique_cache([])
+    )(start) == [4,5,6,7,8,9,10,1,2,3] 
 
 
 # Examples of "virtual nodes" used for recursive algorithms.
